@@ -1,0 +1,33 @@
+Current Structure of 2D simple_drone_envo:
+
+	onLoad():
+	 - Set up canvas
+	 - Set up event listeners on window
+	 - Run main loop "draw" function every 25ms using setInterval();
+
+	draw():
+	 - Clear Canvas
+	 - Calculate new position for object, create image object and show it (likely INEFFICIENT)
+	   - calculate intersection
+	 - Update canvas
+
+
+Next Steps:
+ - Integrate a reinforcement tensorflow model
+
+
+
+
+Sources:
+ - https://medium.com/@pierrerouhard/reinforcement-learning-in-the-browser-an-introduction-to-tensorflow-js-9a02b143c099 
+ - https://storage.googleapis.com/tfjs-vis/mnist/dist/index.html
+ - https://tims457.medium.com/solving-mountain-car-with-q-learning-b77bf71b1de2
+
+
+Notes on Sources:
+ - Goal of reinforcement learning is to maximize reward
+ - During training, the model returns the state and the user decides whether to punish or reward the model based on its output.
+ - Parameter/Object of interest (drone, car, etc.) have a state (position, velocity) and an multiple actions (rotate right, rotate left, move upwards).
+ - Potential scoring/reward algorithms can be 1: -1 for each step that the goal is not reached, 2: Distance from goal, etc.
+ - Q-Learning : learn Q function (policy) taking an observation of environment as input, returning output as action. Q(action, state)
+ - 
