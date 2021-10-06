@@ -47,6 +47,13 @@ body {
    left: 80%;
 }
 
+#rewardVal {
+   background-color: red;
+   position: absolute;
+   width: 2%;
+   left: 97%;
+}
+
 #crash{
    background-color: red;
    position: absolute;

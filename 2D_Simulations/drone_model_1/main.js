@@ -4,6 +4,7 @@ droneConstructor = function(x,y,vx,vy){
     this.vx = vx;
     this.vy = vy;
     this.angle = 0;
+    this.vAngle = 0;
 
     this.rotateSpeed = 2;
     this.accelerateSpeed = 5;
@@ -23,6 +24,7 @@ let gravity = .2;
 let drone = new droneConstructor(500,300,0,0);
 let ball = new ballConstructor(0,400,10,-10,30);
 let score = 0;
+let reward = 0;
 
 window.onload = function(){
     var canvas = document.querySelector("canvas");
@@ -33,6 +35,7 @@ window.onload = function(){
 
     window.addEventListener("keydown", keypressed_handler, false);
     let scoreVal = document.getElementById("scoreVal");
+    let rewardVal = document.getElementById("rewardVal");
 
     var moveInterval = setInterval(function(){
         draw(l);
@@ -57,10 +60,14 @@ draw = function(l){
     l.fill();
     l.stroke();
     
+    // Update drone state
     drone.x += drone.vx;
     drone.y += drone.vy;
     drone.vy += gravity;
+    drone.angle += drone.vAngle/2;
+    drone.vAngle /= 1.3;
 
+    // Update ball state
     ball.x += ball.vx;
     ball.y += ball.vy;
     ball.vy += gravity;
@@ -92,6 +99,14 @@ draw = function(l){
         scoreVal.innerHTML = score;
     }
 
+    // drone angle calculations (reset angle after flip)
+    if(drone.angle>2*Math.PI){
+        drone.angle -= 2*Math.PI;
+    }
+    if(drone.angle<0){
+        drone.angle += 2*Math.PI;
+    }
+
     // intersection of ball and drone:
     if(ball.x + 2 * ball.radius - marginOfIntersection > drone.x && ball.x + marginOfIntersection < drone.x + droneImg.width){
         if(ball.y + 2 * ball.radius > drone.y + marginOfIntersection && ball.y < drone.y + droneImg.height - marginOfIntersection){
@@ -99,18 +114,15 @@ draw = function(l){
             scoreVal.innerHTML = score;
         }
     }
+
+    // update reward
+    rewardVal.innerHTML = reward;
 }
 
 keypressed_handler = function(event){
     //left
     if(event.keyCode == 37){
-        drone.angle -= .2;
-        if(drone.angle>2*Math.PI){
-            drone.angle -= 2*Math.PI;
-        }
-        if(drone.angle<0){
-            drone.angle += 2*Math.PI;
-        }
+        drone.vAngle -= .2;
     }
     //up
     if(event.keyCode == 38){
@@ -119,13 +131,7 @@ keypressed_handler = function(event){
     }
     //right
     if(event.keyCode == 39){
-        drone.angle += .2;
-        if(drone.angle>2*Math.PI){
-            drone.angle -= 2*Math.PI;
-        }
-        if(drone.angle<0){
-            drone.angle += 2*Math.PI;
-        }
+        drone.vAngle += .2;
     }
     //down
     if(event.keyCode == 40){
