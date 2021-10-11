@@ -17,4 +17,11 @@ export default class Ball{
         this.y += this.vy;
         this.vy += gravity;
     }
+
+    resetBall(innerHeight) {
+        this.x = 0;
+        this.y = Math.random()*innerHeight;
+        this.vx = Math.random()*20 + 10;
+        this.vy = Math.random()*10 - 5;
+    }
 }

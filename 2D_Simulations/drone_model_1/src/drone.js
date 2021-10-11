@@ -13,6 +13,17 @@ export default class droneConstructor{
         return tf.tensor2d([[this.x, this.y, this.vx, this.vy, this.angle, this.vAngle, this.rotateSpeed]]);
     }
 
+    setRandomPosition() {
+        this.x = 500 + Math.round(100*Math.random(),1) - 50;
+        this.y = 300;
+        this.vx = 0;
+        this.vy = 0;
+        this.angle = 0;
+        this.vAngle = 0;
+        this.rotateSpeed = 2;
+    }
+    
+
     update(gravity) {
         // Update drone state
         this.x += this.vx;
@@ -22,7 +33,12 @@ export default class droneConstructor{
         this.vAngle /= 1.3;
     }
 
-    updateMove(action) {
+    updateMove(action, droneCanvas, droneImg) {
+        // Check if drone crashed
+        if(droneCanvas.droneCrashed(droneImg)){
+            return true;
+        }
+
         if(action === null){
             return;
         }
@@ -48,5 +64,6 @@ export default class droneConstructor{
         if(action === 4){
             this.vAngle += .2;
         }
+        return false;
     }
 }

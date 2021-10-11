@@ -1,5 +1,3 @@
-import { sampleSize } from 'lodash';
-
 export class Memory {
     constructor(maxMemory) {
         this.maxMemory = maxMemory;
@@ -13,7 +11,11 @@ export class Memory {
         }
     }
 
+    sampleSize(arr, n){
+        return arr.slice(0,n);
+    }
+
     sample(nSamples) {
-        return sampleSize(this.samples, nSamples);
+        return this.sampleSize(this.samples, nSamples);
     }
 }
