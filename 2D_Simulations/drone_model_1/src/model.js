@@ -4,6 +4,7 @@ export default class Model {
         this.numActions = numActions;
         this.batchSize = batchSize;
         this.hiddenLayers = [numHiddenLayers];
+        this.discountRate = .2;
 
         this.defineModel();
     }
@@ -46,7 +47,7 @@ export default class Model {
             // tf.tidy disposes of tensors created during exection (no garbage collection)
             return tf.tidy(() => {
                 // state.print();
-                this.network.predict(state).print();
+                // this.network.predict(state).print();
                 // this.network.predict(state).argMax(1).print();
                 let ret = this.network.predict(state).argMax(1).dataSync()[0];
                 console.log(ret);
@@ -60,7 +61,7 @@ export default class Model {
         // filter out states from batch
         let states = batch.map(([state, , , ]) => state);
         // filter out nextStates from batch
-        let nextStates = batch.map(([state , , , nextState]) => nextState ? nextState : state);
+        let nextStates = batch.map(([ , , , nextState]) => nextState ? nextState : tf.zeros([this.model.numStates]));
 
         // Predict the values of each action at each state
         let qsa = states.map((state) => this.predict(state));
@@ -68,15 +69,19 @@ export default class Model {
         let qsad = nextStates.map((nextState) => this.predict(nextState));
 
         let x = new Array();
-        let y = new Array();
+        let y = new Array(); 
 
         // Update the states rewards with the discounted next states rewards
         batch.forEach(
             ([state, action, reward, nextState], index) => {
                 let currentQ = qsa[index];
-                currentQ[action] = nextState ? reward + this.discountRate * qsad[index].max().dataSync() : reward;
+                currentQ = currentQ.dataSync();
+                
+                currentQ[action] = nextState ? reward + this.discountRate * qsad[index].max().dataSync() : reward; //reward + this.discountRate * qsad[index].max().dataSync() // + this.discountRate * qsad[index].dataSync()[action]
+                console.log(currentQ);
+                console.error(state.dataSync()[0], state.dataSync()[1], reward);
                 x.push(state.dataSync());
-                y.push(currentQ.dataSync());
+                y.push(currentQ);
             }
         );
 

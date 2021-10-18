@@ -13,9 +13,10 @@ export class DroneCanvas{
         this.setRandomDronePosition();
         this.ball = new ballConstructor(0,400,10,-10,30);
         this.score = 0;
-        this.reward = 0;
+        // this.reward = 0;
+        this.pause = false;
 
-        this.addKeyDownHandler(this.drone);
+        this.addKeyDownHandler(this, this.drone);
     }
 
     getDroneBallStateTensor() {
@@ -62,19 +63,21 @@ export class DroneCanvas{
         // Reward needs to increase over time to reinforce staying alive? maybe?
         // Reward needs to want to stay at a specific point (500,300) or stay away from borders
         // Reward needs to want to stay away from ball
-        let distanceFromBall = ((this.drone.y - this.ball.y)**2 + (this.drone.x - this.ball.x)**2)**(1/2);
-        let distanceFromPoint = ((this.drone.y - 500)**2 + (this.drone.x - 300)**2)**(1/2);
-        
-        this.reward = distanceFromBall + (600 - distanceFromPoint);
-        if(this.droneCrashed === true){
-            this.reward = -200
+
+        let reward;
+
+        if(this.drone.y <= 300){
+            reward = -100;
+        }else if(this.drone.y > 300 && this.drone.y <= 350){
+            reward = 100;
+        }else if(this.drone.y > 350){
+            reward = -100;
         }
-        this.reward /= 10;
-        this.reward = Math.round(this.reward);
-        return this.reward;
+
+        return reward;
     }
 
-    addKeyDownHandler(drone){
+    addKeyDownHandler(droneCanvas, drone){
         window.addEventListener("keydown", function(event){
                 //left
                 if(event.keyCode == 37){
@@ -93,6 +96,10 @@ export class DroneCanvas{
                 if(event.keyCode == 40){
                     drone.vy += 5*Math.cos(drone.angle);
                     drone.vx -= 5*Math.sin(drone.angle);
+                }
+                //space
+                if(event.keyCode == 32){
+                    droneCanvas.pause = true;
                 }
         });
     }
@@ -135,9 +142,10 @@ export class DroneCanvas{
         // boundary of canvas: ball
         if(this.ball.y > 200+innerHeight || this.ball.y < -30 || this.ball.x > 100+innerWidth || this.ball.x < -30){
             this.ball.x = 0;
-            this.ball.y = Math.random()*innerHeight;
-            this.ball.vx = Math.random()*20 + 10;
-            this.ball.vy = Math.random()*10 - 5;
+            // Commented out to stop ball from randomizing
+            // this.ball.y = Math.random()*innerHeight;
+            // this.ball.vx = Math.random()*20 + 10;
+            // this.ball.vy = Math.random()*10 - 5;
     
             this.score += 2;
             scoreVal.innerHTML = this.score;
@@ -160,11 +168,15 @@ export class DroneCanvas{
         }
 
         // update reward
-        this.reward++;
-        rewardVal.innerHTML = this.reward;
+        // this.reward++;
+        // rewardVal.innerHTML = this.reward;
     }
 }
 
+/*** this is the sleep function, it describes selep
+ * @param 
+ * @return 
+ */
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -172,18 +184,23 @@ function sleep(ms) {
 async function run(droneCanvas, l, model) {
     let state = droneCanvas.getDroneBallStateTensor();
     let done = false;
-    let eps = 0.1;
+    let eps = 0.2;
     let memoryLength = 500;
     let action = null;
-    let reward = null;
+    let reward = 0;
     let memory = new Memory(memoryLength);
     let numGames = 300;
+    let maxFrames = 9999;
 
     for (let i = 0; i < numGames; ++i) {
         let frameNum = 0;
-        while(!done){
+        while(!done && frameNum < maxFrames){
             // Render image in browser
-            await sleep(20);
+            await sleep(10);
+
+            if(droneCanvas.pause === true){
+                return;
+            }
 
             let droneImg = new Image();
             droneImg.src="../images/drone4.png";
@@ -192,30 +209,26 @@ async function run(droneCanvas, l, model) {
 
             done = droneCanvas.droneCrashed(droneImg);
 
-            if(frameNum%6 === 0){
-                // Choose action and update move
-                action = model.chooseAction(state, eps);
-                reward = droneCanvas.computeReward();
-                done = droneCanvas.drone.updateMove(action, droneCanvas, droneImg);
+            // Choose action and update move
+            action = model.chooseAction(state, eps);
+            reward = droneCanvas.computeReward();
+            done = droneCanvas.drone.updateMove(action, droneCanvas, droneImg);
 
-                let nextState = droneCanvas.getDroneBallStateTensor();
+            let nextState = droneCanvas.getDroneBallStateTensor();
 
-                memory.addSample([state, action, reward, nextState]);
-
-                state = nextState;
-            }
+            memory.addSample([state, action, reward, nextState]);
+            state = nextState;
 
             frameNum++;
         }
 
+        model.batchSize = frameNum;
         await model.processAndTrain(memory);
 
-        console.log(eps);
-        eps -= 0.001
+        eps -= 0.005
         droneCanvas.drone.setRandomPosition();
         droneCanvas.ball.resetBall(innerHeight);
         done = false;
-        // console.log(i);
     }
 }
 
@@ -230,7 +243,7 @@ window.onload = function(){
     let rewardVal = document.getElementById("rewardVal");
 
     let droneCanvas = new DroneCanvas();
-    let model = new Model(3,12,3,100); //3,12,5,100
+    let model = new Model(50,7,3,100); //6,12,5,100
 
     run(droneCanvas, l, model);
 }

@@ -7,6 +7,8 @@ export default class droneConstructor{
         this.angle = 0;
         this.vAngle = 0;
         this.rotateSpeed = 2;
+
+        this.scaled = .4;
     }
 
     getDroneStateTensor() {
@@ -26,9 +28,9 @@ export default class droneConstructor{
 
     update(gravity) {
         // Update drone state
-        this.x += this.vx;
-        this.y += this.vy;
-        this.vy += gravity;
+        this.x += this.scaled*this.vx;
+        this.y += this.scaled*this.vy;
+        this.vy += this.scaled*gravity;
         this.angle += this.vAngle/2;
         this.vAngle /= 1.3;
     }
@@ -48,21 +50,21 @@ export default class droneConstructor{
         }
         // up
         if(action === 1){
-            this.vy -= 5*Math.cos(this.angle);
-            this.vx += 5*Math.sin(this.angle);
+            this.vy -= this.scaled*5*Math.cos(this.angle);
+            this.vx += this.scaled*5*Math.sin(this.angle);
         }
         // down
         if(action === 2){
-            this.vy += 5*Math.cos(this.angle);
-            this.vx -= 5*Math.sin(this.angle);
+            this.vy += this.scaled*5*Math.cos(this.angle);
+            this.vx -= this.scaled*5*Math.sin(this.angle);
         }
         // left
         if(action === 3){
-            this.vAngle -= .2;
+            this.vAngle -= this.scaled*.2;
         }
         // right
         if(action === 4){
-            this.vAngle += .2;
+            this.vAngle += this.scaled*.2;
         }
         return false;
     }
