@@ -5,24 +5,34 @@ import { Memory } from './memory.js';
 
 export class DroneCanvas{
 
+    /**
+     * Create a Ball, Drone, and all canvas variables.
+     */
     constructor() {
         // DEFINE GAME VARIABLES
         this.marginOfIntersection = 10;
         this.gravity = .2;
         this.drone = new droneConstructor(500,300,0,0);
-        this.setRandomDronePosition();
         this.ball = new ballConstructor(0,400,10,-10,30);
         this.score = 0;
-        // this.reward = 0;
+        this.droneImg;
         this.pause = false;
 
+        // Add user input functionality
         this.addKeyDownHandler(this, this.drone);
     }
 
+    /**
+     * Get the current state of the environment. This includes the ball and drone position, velocities, and angle/angular velocities.
+     * @return A 12x1 array of drone and ball attributes.
+     */
     getDroneBallStateTensor() {
         return tf.concat([this.drone.getDroneStateTensor(), this.ball.getBallStateTensor()], 1);
       }
     
+    /**
+     * Sets the drone to a random position near the center of the screen.
+     */
     setRandomDronePosition = function() {
         this.drone.x = 500 + Math.round(100*Math.random(),1) - 50;
         this.drone.y = 300;
@@ -33,8 +43,12 @@ export class DroneCanvas{
         this.drone.rotateSpeed = 2;
     }
     
-    droneCrashed = function(droneImg) {
-        if(droneImg.height + this.drone.y >= innerHeight){
+    /**
+     * Checks whether or not the drone is currently intersecting the ball or a border of the canvas.
+     * @return Boolean
+     */
+    droneCrashed = function() {
+        if(this.droneImg.height + this.drone.y >= innerHeight){
             return true;
         }
         // Upper boundary of canvas: drone
@@ -42,7 +56,7 @@ export class DroneCanvas{
             return true;
         }
         // Right boundary of canvas: drone
-        if(droneImg.width + this.drone.x >= innerWidth){
+        if(this.droneImg.width + this.drone.x >= innerWidth){
             return true;
         }
         // Left boundary of canvas: drone
@@ -51,14 +65,18 @@ export class DroneCanvas{
         }
     
         // intersection of ball and drone:
-        if(this.ball.x + 2 * this.ball.radius - this.marginOfIntersection > this.drone.x && this.ball.x + this.marginOfIntersection < this.drone.x + droneImg.width){
-            if(this.ball.y + 2 * this.ball.radius > this.drone.y + this.marginOfIntersection && this.ball.y < this.drone.y + droneImg.height - this.marginOfIntersection){
+        if(this.ball.x + 2 * this.ball.radius - this.marginOfIntersection > this.drone.x && this.ball.x + this.marginOfIntersection < this.drone.x + this.droneImg.width){
+            if(this.ball.y + 2 * this.ball.radius > this.drone.y + this.marginOfIntersection && this.ball.y < this.drone.y + this.droneImg.height - this.marginOfIntersection){
                 return true;
             }
         }
         return false;
     }
 
+    /**
+     * Compute and return a value representing the goodness of a position
+     * @return Integer representing drone location in comparison with where we want it to be.
+     */
     computeReward() {
         // Reward needs to increase over time to reinforce staying alive? maybe?
         // Reward needs to want to stay at a specific point (500,300) or stay away from borders
@@ -66,17 +84,29 @@ export class DroneCanvas{
 
         let reward;
 
-        if(this.drone.y <= 300){
+        if(this.drone.y <= 250){
             reward = -100;
-        }else if(this.drone.y > 300 && this.drone.y <= 350){
+        }else if(this.drone.y > 250 && this.drone.y <= 350){
             reward = 100;
         }else if(this.drone.y > 350){
             reward = -100;
         }
 
+        // if(this.droneCrashed(this.droneImg)){
+        //     reward = -100;
+        // }
+
+        console.log(reward)
+
         return reward;
     }
 
+    /**
+     * Add key listeners so user can control drone movement and stop the game.
+     * 
+     * @param {Object} droneCanvas The game object
+     * @param {Object} drone The drone object
+     */
     addKeyDownHandler(droneCanvas, drone){
         window.addEventListener("keydown", function(event){
                 //left
@@ -104,6 +134,12 @@ export class DroneCanvas{
         });
     }
     
+    /**
+     * Function responsible for visualizing drone and updating canvas based on gravity and input.
+     * 
+     * @param {Object} l Canvas object
+     * @param {Image} droneImg Drone image object
+     */
     draw = function(l, droneImg){
         l.clearRect(0, 0, innerWidth, innerHeight);
     
@@ -166,31 +202,38 @@ export class DroneCanvas{
                 scoreVal.innerHTML = this.score;
             }
         }
-
-        // update reward
-        // this.reward++;
-        // rewardVal.innerHTML = this.reward;
     }
 }
 
-/*** this is the sleep function, it describes selep
- * @param 
- * @return 
+/*** this is the sleep function, it describes sleep
+ * @param {Integer} ms time in milliseconds program should pause
+ * @return A promise
  */
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Function responsible for running the game in a loop. Main program flow.
+ * @param {Object} droneCanvas  The game object
+ * @param {Object} l Canvas context
+ * @param {Object} model Model object
+ */
 async function run(droneCanvas, l, model) {
     let state = droneCanvas.getDroneBallStateTensor();
     let done = false;
-    let eps = 0.2;
+    let eps = 0.5;
     let memoryLength = 500;
     let action = null;
     let reward = 0;
     let memory = new Memory(memoryLength);
     let numGames = 300;
-    let maxFrames = 9999;
+    let maxFrames = 999;
+
+    let droneImg = new Image();
+    droneImg.src="../images/drone4.png";
+
+    droneCanvas.droneImg = droneImg;
 
     for (let i = 0; i < numGames; ++i) {
         let frameNum = 0;
@@ -201,9 +244,6 @@ async function run(droneCanvas, l, model) {
             if(droneCanvas.pause === true){
                 return;
             }
-
-            let droneImg = new Image();
-            droneImg.src="../images/drone4.png";
 
             await droneCanvas.draw(l, droneImg);
 
@@ -222,7 +262,6 @@ async function run(droneCanvas, l, model) {
             frameNum++;
         }
 
-        model.batchSize = frameNum;
         await model.processAndTrain(memory);
 
         eps -= 0.005
@@ -232,6 +271,9 @@ async function run(droneCanvas, l, model) {
     }
 }
 
+/**
+ * JS Entry point. Begins flow execution, sets up canvas and model. Calls run.
+ */
 window.onload = function(){
     var canvas = document.querySelector("canvas");
 
@@ -243,7 +285,7 @@ window.onload = function(){
     let rewardVal = document.getElementById("rewardVal");
 
     let droneCanvas = new DroneCanvas();
-    let model = new Model(50,7,3,100); //6,12,5,100
+    let model = new Model(100,7,3,500); //6,12,5,100
 
     run(droneCanvas, l, model);
 }

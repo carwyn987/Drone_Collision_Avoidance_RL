@@ -1,21 +1,33 @@
 export default class Model {
+    /**
+     * Define a new model with specified parameters.
+     * @param {Integer} numHiddenLayers Number of nodes in the first and only hidden layer
+     * @param {Integer} numStates Number of states which the drone and ball can be in
+     * @param {Integer} numActions Number of actions the drone can take
+     * @param {Integer} batchSize Number of samples of memory to train model on after each game
+     */
     constructor(numHiddenLayers, numStates, numActions, batchSize) {
         this.numStates = numStates;
         this.numActions = numActions;
         this.batchSize = batchSize;
         this.hiddenLayers = [numHiddenLayers];
-        this.discountRate = .2;
+        this.discountRate = .9;
 
         this.defineModel();
     }
 
+    /**
+     * Define a new model in the constructed Model.
+     * Defines this.network
+     */
     defineModel(){
-
         // Define Network
         this.network = tf.sequential();
 
         // For the number of hidden layers defined in constructer, add a hidden layer with the set size.
         this.hiddenLayers.forEach((hiddenLayerSize, i) => {
+            console.log("numStates: ", this.numStates)
+            console.log("i: ", i)
             this.network.add(tf.layers.dense({
                 units: hiddenLayerSize,
                 activation: 'relu',
@@ -30,15 +42,31 @@ export default class Model {
         this.network.compile({optimizer: 'adam', loss: 'meanSquaredError'});
     }
 
+    /**
+     * Predict the passed in state and return the prediction (action)
+     * @param {Object Array} states State or array of states
+     * @return Action
+     */
     predict(states) {
         return tf.tidy(() => this.network.predict(states));
     }
 
+    /**
+     * Fit batches upon the network and train
+     * @param {Tensor2D} xBatch States
+     * @param {Tensor2D} yBatch Actions
+     */
     async train(xBatch, yBatch) {
         await this.network.fit(xBatch, yBatch);
     }
 
-    // We want to begin by exploring a lot, and then as we become more confident we will set into a strategy.
+    /**
+     * Choose an action either by random or by prediction (choose from eps)
+     * We want to begin by exploring a lot, and then as we become more confident we will set into a strategy.
+     * @param {Object} state Current state to predict action from
+     * @param {Float} eps Decimal representing chance of randomly choosing action
+     * @returns {number} The action chosen by the model
+     */
     chooseAction(state, eps) {
         if(Math.random() < eps){
             // Choose a random action
@@ -46,16 +74,17 @@ export default class Model {
         }else {
             // tf.tidy disposes of tensors created during exection (no garbage collection)
             return tf.tidy(() => {
-                // state.print();
-                // this.network.predict(state).print();
-                // this.network.predict(state).argMax(1).print();
                 let ret = this.network.predict(state).argMax(1).dataSync()[0];
-                console.log(ret);
+                // console.log(ret);
                 return ret;
             });
         }
     }
 
+    /**
+     * Pull samples from memory, and train network on these samples.
+     * @param {Object} memory Memory object to pull samples from
+     */
     async processAndTrain(memory) {
         let batch = memory.sample(this.batchSize);
         // filter out states from batch
@@ -78,8 +107,8 @@ export default class Model {
                 currentQ = currentQ.dataSync();
                 
                 currentQ[action] = nextState ? reward + this.discountRate * qsad[index].max().dataSync() : reward; //reward + this.discountRate * qsad[index].max().dataSync() // + this.discountRate * qsad[index].dataSync()[action]
-                console.log(currentQ);
-                console.error(state.dataSync()[0], state.dataSync()[1], reward);
+                // console.log(currentQ);
+                // console.error(state.dataSync()[0], state.dataSync()[1], reward);
                 x.push(state.dataSync());
                 y.push(currentQ);
             }
@@ -91,7 +120,5 @@ export default class Model {
 
         // Learn the Q(s, a) values given associated discounted rewards
         await this.train(x, y);
-
-        // console.log(batch);
     }
 }
