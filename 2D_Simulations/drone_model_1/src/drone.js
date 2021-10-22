@@ -56,6 +56,18 @@ export default class droneConstructor{
      * @return True if drone crashed, false if drone is still in flight
      */
     updateMove(action, droneCanvas, droneImg) {
+
+        // // Go up
+        // if(action - 0.5 > 1){
+        //     this.vy -= this.scaled*5*Math.cos(this.angle);
+        //     this.vx += this.scaled*5*Math.sin(this.angle);
+        // }else{
+        //     // Go down
+        //     this.vy += this.scaled*5*Math.cos(this.angle);
+        //     this.vx -= this.scaled*5*Math.sin(this.angle);
+        // }
+
+
         // Check if drone crashed
         if(droneCanvas.droneCrashed(droneImg)){
             return true;

@@ -51,6 +51,10 @@ export default class Ball{
         // this.vx = Math.random()*20 + 10;
         // this.vy = Math.random()*10 - 5;
 
+        // this.y = 100;
+        // this.vx = 10;
+        // this.vy = 0;
+
         // Uncomment to to remove ball from problem
         this.y = 800
         this.vx = 0

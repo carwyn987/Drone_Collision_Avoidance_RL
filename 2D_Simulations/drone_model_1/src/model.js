@@ -12,6 +12,15 @@ export default class Model {
         this.batchSize = batchSize;
         this.hiddenLayers = [numHiddenLayers];
         this.discountRate = .9;
+        this.numDiscounts = 10;
+
+        // Calculate Discount Scalar
+        let sum = 100;
+        for(let i = 1; i<this.numDiscounts; i++){
+            sum += (this.discountRate**i)*100;
+        }
+
+        this.discountScalar = 100/(sum);
 
         this.defineModel();
     }
@@ -74,9 +83,12 @@ export default class Model {
         }else {
             // tf.tidy disposes of tensors created during exection (no garbage collection)
             return tf.tidy(() => {
-                let ret = this.network.predict(state).argMax(1).dataSync()[0];
-                // console.log(ret);
-                return ret;
+                // let ret = this.network.predict(state).argMax(1).dataSync()[0];
+                // return ret;
+                let logits = this.network.predict(state);
+                let sigmoid = tf.sigmoid(logits);
+                let probs = tf.div(sigmoid, tf.sum(sigmoid));
+                return tf.multinomial(probs, 1).dataSync()[0];
             });
         }
     }
@@ -85,17 +97,21 @@ export default class Model {
      * Pull samples from memory, and train network on these samples.
      * @param {Object} memory Memory object to pull samples from
      */
-    async processAndTrain(memory) {
+    async processAndTrain(memory, frames) {
         let batch = memory.sample(this.batchSize);
         // filter out states from batch
         let states = batch.map(([state, , , ]) => state);
         // filter out nextStates from batch
         let nextStates = batch.map(([ , , , nextState]) => nextState ? nextState : tf.zeros([this.model.numStates]));
+        // Actions at each state
+        let actions = batch.map(([ , action, , ]) => action);
 
         // Predict the values of each action at each state
         let qsa = states.map((state) => this.predict(state));
         // Predict the values of each action at each next state
         let qsad = nextStates.map((nextState) => this.predict(nextState));
+
+        
 
         let x = new Array();
         let y = new Array(); 
@@ -106,11 +122,24 @@ export default class Model {
                 let currentQ = qsa[index];
                 currentQ = currentQ.dataSync();
                 
-                currentQ[action] = nextState ? reward + this.discountRate * qsad[index].max().dataSync() : reward; //reward + this.discountRate * qsad[index].max().dataSync() // + this.discountRate * qsad[index].dataSync()[action]
-                // console.log(currentQ);
-                // console.error(state.dataSync()[0], state.dataSync()[1], reward);
-                x.push(state.dataSync());
-                y.push(currentQ);
+                // currentQ[action] = nextState ? reward + this.discountRate * qsad[index].max().dataSync() : reward; //reward + this.discountRate * qsad[index].max().dataSync() // + this.discountRate * qsad[index].dataSync()[action]
+                // x.push(state.dataSync());
+                // y.push(currentQ);
+                
+                if(batch[index-this.numDiscounts]){
+
+                    let origReward = currentQ[action];
+
+                    let sum = reward;
+                    for(let i = 1; i<=this.numDiscounts; i++){
+                        sum += (this.discountRate**i)*qsa[index-i].dataSync()[actions[index - i]]
+                    }
+                    currentQ[action] = currentQ[action] + 0.003*this.discountScalar*sum;
+
+                    x.push(state.dataSync());
+                    y.push(currentQ);
+                    console.log("Reward: ", reward, "Orig Choice: ", origReward, "New Choice: ", currentQ[action], "Choice Change: ", (currentQ[action] -origReward), ", Action: ", action);
+                }
             }
         );
 
