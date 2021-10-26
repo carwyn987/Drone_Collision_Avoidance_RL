@@ -26,8 +26,8 @@ export class DroneCanvas{
      * Get the current state of the environment. This includes the ball and drone position, velocities, and angle/angular velocities.
      * @return A 12x1 array of drone and ball attributes.
      */
-    getDroneBallStateTensor() {
-        return tf.concat([this.drone.getDroneStateTensor(), this.ball.getBallStateTensor()], 1);
+    getDroneBallStateTensor(canvasXMax, canvasYMax) {
+        return tf.concat([this.drone.getDroneStateTensor(canvasXMax, canvasYMax), this.ball.getBallStateTensor(canvasXMax, canvasYMax)], 1);
       }
     
     /**
@@ -219,7 +219,7 @@ function sleep(ms) {
  * @param {Object} model Model object
  */
 async function run(droneCanvas, l, model) {
-    let state = droneCanvas.getDroneBallStateTensor();
+    let state = droneCanvas.getDroneBallStateTensor(innerWidth, innerHeight);
     let done = false;
     let eps = 0.2;
     let memoryLength = 500;
@@ -253,7 +253,7 @@ async function run(droneCanvas, l, model) {
             reward = droneCanvas.computeReward();
             done = droneCanvas.drone.updateMove(action, droneCanvas, droneImg);
 
-            let nextState = droneCanvas.getDroneBallStateTensor();
+            let nextState = droneCanvas.getDroneBallStateTensor(innerWidth, innerHeight);
 
             memory.addSample([state, action, reward, nextState]);
             state = nextState;
@@ -284,7 +284,7 @@ window.onload = function(){
     let rewardVal = document.getElementById("rewardVal");
 
     let droneCanvas = new DroneCanvas();
-    let model = new Model(100,7,3,300); //6,12,5,100
+    let model = new Model(30,7,3,30); //6,12,5,100
 
     run(droneCanvas, l, model);
 }

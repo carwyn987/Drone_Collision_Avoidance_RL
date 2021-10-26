@@ -24,6 +24,6 @@ export class Memory {
      * @param {Integer} n Number of frames to return
      */
     sample(nSamples) {
-        return this.samples.slice(0,nSamples);
+        return this.samples.slice(-nSamples);
     }
 }

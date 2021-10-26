@@ -35,8 +35,7 @@ export default class Model {
 
         // For the number of hidden layers defined in constructer, add a hidden layer with the set size.
         this.hiddenLayers.forEach((hiddenLayerSize, i) => {
-            console.log("numStates: ", this.numStates)
-            console.log("i: ", i)
+
             this.network.add(tf.layers.dense({
                 units: hiddenLayerSize,
                 activation: 'relu',
@@ -126,13 +125,13 @@ export default class Model {
                 // x.push(state.dataSync());
                 // y.push(currentQ);
                 
-                if(batch[index-this.numDiscounts]){
+                if(batch[index+this.numDiscounts]){
 
                     let origReward = currentQ[action];
 
                     let sum = reward;
                     for(let i = 1; i<=this.numDiscounts; i++){
-                        sum += (this.discountRate**i)*qsa[index-i].dataSync()[actions[index - i]]
+                        sum += (this.discountRate**i)*qsa[index+i].argMax(1).dataSync();
                     }
                     currentQ[action] = currentQ[action] + 0.003*this.discountScalar*sum;
 

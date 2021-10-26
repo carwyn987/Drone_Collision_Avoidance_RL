@@ -9,16 +9,20 @@ export default class droneConstructor{
         this.vy = 0;
         this.angle = 0;
         this.vAngle = 0;
-        this.rotateSpeed = 0;
+        // this.rotateSpeed = 0;
         this.scaled = .4;
+        this.maxV = 30;
+        this.minV = -30;
     }
 
     /**
      * Gets the current attributes of drone and return as a tensor
      * @returns 1x7 tensor of drone attributes
      */
-    getDroneStateTensor() {
-        return tf.tensor2d([[this.x, this.y, this.vx, this.vy, this.angle, this.vAngle, this.rotateSpeed]]);
+    getDroneStateTensor(canvasXMax, canvasYMax) {
+        let scaledvx = this.vx/(this.maxV - this.minV) + 0.5;
+        let scaledvy = this.vy/(this.maxV - this.minV) + 0.5;
+        return tf.tensor2d([[this.x/canvasXMax, this.y/canvasYMax, scaledvx, scaledvy, this.angle/(2*Math.PI), this.vAngle, this.vAngle]]);
     }
 
     /**
@@ -57,17 +61,6 @@ export default class droneConstructor{
      */
     updateMove(action, droneCanvas, droneImg) {
 
-        // // Go up
-        // if(action - 0.5 > 1){
-        //     this.vy -= this.scaled*5*Math.cos(this.angle);
-        //     this.vx += this.scaled*5*Math.sin(this.angle);
-        // }else{
-        //     // Go down
-        //     this.vy += this.scaled*5*Math.cos(this.angle);
-        //     this.vx -= this.scaled*5*Math.sin(this.angle);
-        // }
-
-
         // Check if drone crashed
         if(droneCanvas.droneCrashed(droneImg)){
             return true;
@@ -84,11 +77,29 @@ export default class droneConstructor{
         if(action === 1){
             this.vy -= this.scaled*5*Math.cos(this.angle);
             this.vx += this.scaled*5*Math.sin(this.angle);
+            if(this.vy > this.maxV){
+                this.vy = this.maxV;
+            }else if(this.vx > this.maxV){
+                this.vx = this.maxV;
+            }else if(this.vy < this.minV){
+                this.vy = this.minV;
+            }else if(this.vx < this.minV){
+                this.vx = this.minV;
+            }
         }
         // down
         if(action === 2){
             this.vy += this.scaled*5*Math.cos(this.angle);
             this.vx -= this.scaled*5*Math.sin(this.angle);
+            if(this.vy > this.maxV){
+                this.vy = this.maxV;
+            }else if(this.vx > this.maxV){
+                this.vx = this.maxV;
+            }else if(this.vy < this.minV){
+                this.vy = this.minV;
+            }else if(this.vx < this.minV){
+                this.vx = this.minV;
+            }
         }
         // left
         if(action === 3){

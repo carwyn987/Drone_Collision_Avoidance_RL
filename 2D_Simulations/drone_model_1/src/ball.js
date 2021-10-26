@@ -20,9 +20,11 @@ export default class Ball{
      * Gets the current attributes of ball and return as a tensor
      * @returns 1x5 tensor of ball attributes
      */
-    getBallStateTensor() {
+    getBallStateTensor(canvasXMax, canvasYMax) {
         // Comment to to remove ball from problem
-        // return tf.tensor2d([[this.x, this.y, this.vx, this.vy, this.radius]]);
+        // let scaledvx = this.vx/(this.maxV - this.minV) + 0.5;
+        // let scaledvy = this.vy/(this.maxV - this.minV) + 0.5;
+        // return tf.tensor2d([[this.x/droneImg.width, this.y/droneImg.height, this.vx, this.vy]]);
 
         // Uncomment to to remove ball from problem
         return tf.tensor2d([[]]);
