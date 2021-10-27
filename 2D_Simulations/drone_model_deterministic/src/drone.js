@@ -10,6 +10,9 @@ export default class Drone{
         // Set the drone size
         this.width = 50;
         this.height = 30;
+
+        this.accUp = 0.05;
+        this.accDown = 0.02;
     }
 
     /**
@@ -58,9 +61,9 @@ export default class Drone{
      */
     move(action){
         if(action === 0){
-            this.vy += 0.1;
+            this.vy += this.accDown;
         }else if(action === 1){
-            this.vy -= 0.1;
+            this.vy -= this.accUp;
         }
     }
 
@@ -74,16 +77,61 @@ export default class Drone{
     }
 
     /**
-     * Gets the current attributes of drone and return as a tensor
-     * @param {Canvas} canvas Canvas object to get height from
+     * Gets the current attributes of drone and return as an array
      * @returns {tensor2d} 2 attribute tensor of drone y and vy
      */
-    getState(canvas) {
-        // First, scale the y value
-        let yScaled = this.y/(canvas.height);
-        // Now scale vy value
-        // Let the max range be [-10, 10]. Therefore to transform, divide by 20 to reduce to [-0.5, 0.5] and add 0.5.
-        let vyScaled = (this.vy/20) + 0.5;
-        return tf.tensor2d([[yScaled, vyScaled]]);
+    getState() {
+        return {
+            x: this.x,
+            y: this.y,
+            vx: this.vx,
+            vy: this.vy
+        }
+    }
+
+    /**
+     * Simulate updating the state by a move, and return the state after an action
+     * @param {Object} state drone state object
+     * @param {Number} action integer representing possible action
+     * @param {Number} gravity float representing gravity
+     */
+    simulateUpdateStateAfterGravity(state, action, gravity) {
+        if(action === 0){
+            state.vy += this.accDown;
+        }else if(action === 1){
+            state.vy -= this.accUp;
+        }
+        state.x += state.vx;
+        state.y += state.vy;
+        state.vy += gravity;
+        return state;
+    }
+
+    crashWithBall(ball){
+        // referencing the ball
+        let left;
+        let right;
+        let top;
+        let bottom;
+        // If top of ball contacts bottom of drone
+        if(ball.y - ball.radius < this.y + this.height){
+            top = true;
+        }
+        // If bottom of ball contacts top of drone
+        if(ball.y + ball.radius > this.y){
+            bottom = true;
+        }
+        // If right of ball contacts left of drone
+        if(ball.x + ball.radius > this.x){
+            right = true;
+        }
+        // If left of ball contacts right of drone
+        if(ball.x < this.x + this.width){
+            left = true;
+        }
+
+        if(bottom && top && left && right){
+            return true;
+        }
     }
 }
