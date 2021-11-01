@@ -6,10 +6,14 @@
  * @return {Number} Arbitrary reward value (+ if in middle range, - if outside)
  */
 export default function calculateReward(drone, REWARD_TOP_BOUNDARY, REWARD_BOTTOM_BOUNDARY){
-    // Discrete reward function
-    if(drone.y >= REWARD_TOP_BOUNDARY && drone.y <= REWARD_BOTTOM_BOUNDARY){
-        return 0.5;
-    }else{
-        return -0.5;
-    }
+    // Discrete 1 boundary:
+    // if(drone.y >= REWARD_TOP_BOUNDARY && drone.y <= REWARD_BOTTOM_BOUNDARY){
+    //     return 0.5;
+    // }else{
+    //     return -0.5;
+    // }
+
+    // Distance from middle:
+    let middleY = REWARD_TOP_BOUNDARY + (REWARD_BOTTOM_BOUNDARY - REWARD_BOTTOM_BOUNDARY)/2;
+    return -Math.abs(drone.y - middleY)/500 + 1;
 }

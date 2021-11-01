@@ -14,6 +14,7 @@ let RAND_ACTION_PROB = 0.9;
 let REWARD_TOP_BOUNDARY = 250;
 let REWARD_BOTTOM_BOUNDARY = 350;
 let DISCOUNT_RATE = 0.9;
+let MAX_FRAMES = 600;
 
 /**
  * Begins execution of main program loop in async function.
@@ -29,18 +30,18 @@ async function beginExecution(){
     let memory = new Memory(MEMORY_SIZE);
 
     // Create a new model object for predicting drone action
-    let model = new Model(10, 2, 2, 100, DISCOUNT_RATE); // Currently set to 10 hidden layer nodes, 2 states (drone y, vy), 2 actions (up, down), 100 batch size
+    let model = new Model(50, 2, 2, 100, DISCOUNT_RATE); // Currently set to 10 hidden layer nodes, 2 states (drone y, vy), 2 actions (up, down), 100 batch size
     
     // Set up variable for number of iterations of training
     let sims = 0;
 
     // Attempt to load a model saved in local storage
     try{
-        let network = await tf.loadLayersModel('localstorage://my-model-1');
+        let network = await tf.loadLayersModel('localstorage://my-model-2');
         model.network = network;
         model.network.summary();
         model.network.compile({optimizer: 'adam', loss: 'meanSquaredError'});
-        sims = localStorage.getItem('numIterations');
+        sims = localStorage.getItem('numIterations2');
     }catch(err){
         console.log("No model exists, generating model with random parameters.");
     }
@@ -60,7 +61,7 @@ async function beginExecution(){
         // Run the current simulation until drone crashes
         numFrames = 0;
         let crashed = false;
-        while(!crashed){
+        while(!crashed && numFrames < MAX_FRAMES){
             // Saves browser from crashing
             await sleep(0);
 
@@ -98,8 +99,8 @@ async function beginExecution(){
 
         // Save the current model to local storage
         if(sims%50 == 0 && sims>0){
-            let saveResult = await model.network.save('localstorage://my-model-1');
-            localStorage.setItem('numIterations', sims);
+            let saveResult = await model.network.save('localstorage://my-model-2');
+            localStorage.setItem('numIterations2', sims);
             console.log("Saved model, iteration: ", sims);
         }
 
