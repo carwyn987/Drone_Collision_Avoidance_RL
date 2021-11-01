@@ -32,6 +32,12 @@ export default class Model {
             inputShape: this.numStateVars
         }))
 
+        this.network.add(tf.layers.dense({
+            units: this.hiddenLayers,
+            activation: 'relu',
+            inputShape: this.numStateVars
+        }))
+
         //Add a densely connected output layer
         this.network.add(tf.layers.dense({
             units: this.numActions
@@ -93,6 +99,8 @@ export default class Model {
         // Actions at each state
         let actions = batch.map(([ ,action, ]) => action);
 
+        let rewards = batch.map(([ , , reward]) => reward);
+
         // Predict the values of each action at each state
         let qsa = states.map((state) => this.predict(state));
 
@@ -106,24 +114,23 @@ export default class Model {
                 currentQ = currentQ.dataSync();
                 
                 if(qsa[index+5]){
-                    // console.log(currentQ[action], " should become ", reward + this.discountRate * qsa[index+1].max().dataSync(), " for action ", action, " , currentQ = ", currentQ);
-                    // Discounted next state rewards
-                    // currentQ[action] = reward + this.discountRate * qsa[index+1].max().dataSync();
-                    // currentQ[action] += this.discountRate**2 * qsa[index+2].max().dataSync();
-                    // currentQ[action] += this.discountRate**3 * qsa[index+3].max().dataSync();
-                    // currentQ[action] += this.discountRate**4 * qsa[index+4].max().dataSync();
-                    // currentQ[action] += this.discountRate**5 * qsa[index+5].max().dataSync();
 
-                    console.log("prev: ", currentQ[action])
+                    console.log("before: ", currentQ[action])
 
                     // Discounted next state difference rewards
-                    currentQ[action] = this.discountRate * (qsa[index+1].max().dataSync() - currentQ[action]);
-                    currentQ[action] += this.discountRate**2 * (qsa[index+2].max().dataSync() - qsa[index+1].max().dataSync());
-                    currentQ[action] += this.discountRate**3 * (qsa[index+3].max().dataSync() - qsa[index+2].max().dataSync());
-                    currentQ[action] += this.discountRate**4 * (qsa[index+4].max().dataSync() - qsa[index+3].max().dataSync());
-                    currentQ[action] += this.discountRate**5 * (qsa[index+5].max().dataSync() - qsa[index+4].max().dataSync());
+                    // currentQ[action] = this.discountRate * (qsa[index+1].max().dataSync() - currentQ[action]);
+                    // currentQ[action] += this.discountRate**2 * (qsa[index+2].max().dataSync() - qsa[index+1].max().dataSync());
+                    // currentQ[action] += this.discountRate**3 * (qsa[index+3].max().dataSync() - qsa[index+2].max().dataSync());
+                    // currentQ[action] += this.discountRate**4 * (qsa[index+4].max().dataSync() - qsa[index+3].max().dataSync());
+                    // currentQ[action] += this.discountRate**5 * (qsa[index+5].max().dataSync() - qsa[index+4].max().dataSync());
 
-                    console.log("new: ", currentQ[action])
+                    currentQ[action] = this.discountRate * (rewards[index+1] - rewards[index]);
+                    currentQ[action] += this.discountRate**2 * (rewards[index+2] - rewards[index+1]);
+                    currentQ[action] += this.discountRate**3 * (rewards[index+3] - rewards[index+2]);
+                    currentQ[action] += this.discountRate**4 * (rewards[index+4] - rewards[index+3]);
+                    currentQ[action] += this.discountRate**5 * (rewards[index+5] - rewards[index+4]);
+
+                    console.log("after: ", currentQ[action])
 
                     x.push(state.dataSync());
                     y.push(currentQ);

@@ -1,4 +1,5 @@
 import Drone from './drone.js';
+import Ball from './ball.js';
 import Memory from './memory.js';
 import Model from './model.js';
 import draw from './draw.js';
@@ -11,10 +12,8 @@ let MEMORY_SIZE = 500;
 let GRAVITY = 0.02;
 let NUM_SIMULATIONS = 99999;
 let RAND_ACTION_PROB = 0.9;
-let REWARD_TOP_BOUNDARY = 250;
-let REWARD_BOTTOM_BOUNDARY = 350;
 let DISCOUNT_RATE = 0.9;
-let MAX_FRAMES = 600;
+let MAX_FRAMES = 1000;
 
 /**
  * Begins execution of main program loop in async function.
@@ -51,6 +50,16 @@ async function beginExecution(){
     let drone = new Drone(canvas, ctx);
     drone.renderDrone(ctx);
 
+    // Create a ball and render it
+    let ball = new Ball(20,300,2.5,-1.9,30);
+    ball.renderBall(ctx);
+
+    // Define the center of the canvas
+    let center = {
+        x: canvas.width/2,
+        y: canvas.height/2 - 100
+    }
+
     // Allocate droneState variable in memory
     let droneState;
     let action;
@@ -59,6 +68,7 @@ async function beginExecution(){
 
     // Run NUM_SIMULATIONS simulations
     for( ;sims<NUM_SIMULATIONS; sims++){
+        console.log(sims)
         // Run the current simulation until drone crashes
         numFrames = 0;
         let crashed = false;
@@ -74,16 +84,17 @@ async function beginExecution(){
             drone.move(action)
 
             // Get the current calculated reward
-            reward = calculateReward(drone, REWARD_TOP_BOUNDARY, REWARD_BOTTOM_BOUNDARY);
+            reward = calculateReward(drone, ball, center, canvas.height);
+            console.log(reward)
 
             // Push the current drone state, action, and reward to memory
             memory.addSample([droneState, action, reward]);
 
             // Draw on canvas updated parameters
-            crashed = draw(canvas, ctx, drone, GRAVITY);
+            crashed = draw(canvas, ctx, drone, ball, GRAVITY);
 
             // Set up green reward range visual
-            rewardRange(canvas, ctx, REWARD_TOP_BOUNDARY, REWARD_BOTTOM_BOUNDARY);
+            rewardRange(ctx, center);
 
             // Increment numFrames
             numFrames++;
@@ -92,8 +103,12 @@ async function beginExecution(){
         // Reset drone to initial position
         drone.setToMiddle();
 
+        // Reset ball to initial position
+        ball.resetBall(canvas.height);
+
         // Decrement RAND_ACTION_PROB exponentially
         RAND_ACTION_PROB *= 0.9;
+        // RAND_ACTION_PROB < 0.1 ? RAND_ACTION_PROB = 0.1 :
 
         // Commence model training
         model.commenceTraining(memory, numFrames);

@@ -2,12 +2,11 @@
  * Draws the green transparent range on the canvas to show when the 'drone' is receiving positive reward
  * @param {Canvas} canvas Canvas object
  * @param {Object} ctx Canvas context
- * @param {Number} rtb Reward top boundary - top pixel value to turn green
- * @param {Number} rbb Reward bottom boundary - bottom pixel value to turn green
+ * @param {Object} center Canvas center
  */
-export default function rewardRange(canvas, ctx, rtb, rbb){
-    ctx.globalAlpha = 0.4;
+export default function rewardRange(ctx, center){
+    ctx.globalAlpha = 0.8;
     ctx.fillStyle = '#bbfaaf';
-    ctx.fillRect(0, rtb, canvas.width, rbb - rtb);
+    ctx.fillRect(center.x - 10, center.y - 10, 70, 10);
     ctx.globalAlpha = 1;
 }

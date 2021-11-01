@@ -29,7 +29,7 @@ export default class Drone{
      * @param {Canvas} canvas Environment canvas
      * @return {Boolean} Drone crashed?
      */
-    crashed(canvas){
+    crashed(canvas, ball){
         // Check if bottom of drone crossed bottom of canvas
         if(this.y + this.height >= canvas.height){
             return true;
@@ -38,6 +38,38 @@ export default class Drone{
         if(this.y <= 0){
             return true;
         }
+
+        // Check if ball intersects drone
+        return this.crashWithBall(ball);
+    }
+
+    crashWithBall(ball){
+        // referencing the ball
+        let left;
+        let right;
+        let top;
+        let bottom;
+        // If top of ball contacts bottom of drone
+        if(ball.y - ball.radius < this.y + this.height){
+            top = true;
+        }
+        // If bottom of ball contacts top of drone
+        if(ball.y + ball.radius > this.y){
+            bottom = true;
+        }
+        // If right of ball contacts left of drone
+        if(ball.x + ball.radius > this.x){
+            right = true;
+        }
+        // If left of ball contacts right of drone
+        if(ball.x < this.x + this.width){
+            left = true;
+        }
+
+        if(bottom && top && left && right){
+            return true;
+        }
+        return false
     }
 
     /**

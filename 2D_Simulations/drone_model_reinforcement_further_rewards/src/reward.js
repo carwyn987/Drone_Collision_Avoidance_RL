@@ -1,19 +1,14 @@
 /**
  * Calculate the reward the drone at a given position receives
- * @param {Object} drone Drone object with relevant y and vy attributes
- * @param {Number} REWARD_TOP_BOUNDARY The lowest pixel value the drone should receive a + reward
- * @param {Number} REWARD_BOTTOM_BOUNDARY The highest pixel value the drone should receive a + reward
- * @return {Number} Arbitrary reward value (+ if in middle range, - if outside)
+ * @param {Object} droneObj Drone object with relevant y and vy attributes
+ * @param {Object} ballObj Ball object with relevant x,y and vx,vy attributes
+ * @param {Array} center, contains x and y attributes for where the ideal position is
+ * @param {Number} innerHeight height of canvas
+ * @return {Number} reward value
  */
-export default function calculateReward(drone, REWARD_TOP_BOUNDARY, REWARD_BOTTOM_BOUNDARY){
-    // Discrete 1 boundary:
-    // if(drone.y >= REWARD_TOP_BOUNDARY && drone.y <= REWARD_BOTTOM_BOUNDARY){
-    //     return 0.5;
-    // }else{
-    //     return -0.5;
-    // }
-
-    // Distance from middle:
-    let middleY = REWARD_TOP_BOUNDARY + (REWARD_BOTTOM_BOUNDARY - REWARD_BOTTOM_BOUNDARY)/2;
-    return -Math.abs(drone.y - middleY)/500 + 1;
+export default function calculateReward(droneObj, ballObj, center, innerHeight){
+    let distanceFromCenter = ((droneObj.x - center.x)**2 + (droneObj.y - center.y)**2)**(1/2);
+    let distanceFromBall = ((ballObj.x - droneObj.x)**2 + (ballObj.y - droneObj.y)**2)**(1/2);
+    let distanceFromEdge = 200/(droneObj.y - 0 < innerHeight -droneObj.y ? droneObj.y - 0 : innerHeight -droneObj.y);
+    return -Math.abs(droneObj.y - center.y)/500 + 1; //  - 20000/distanceFromBall - 0.1*Math.abs(droneObj.vy)
 }
