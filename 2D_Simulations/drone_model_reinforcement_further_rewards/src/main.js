@@ -42,6 +42,7 @@ async function beginExecution(){
         model.network.summary();
         model.network.compile({optimizer: 'adam', loss: 'meanSquaredError'});
         sims = localStorage.getItem('numIterations2');
+        RAND_ACTION_PROB = 0;
     }catch(err){
         console.log("No model exists, generating model with random parameters.");
     }
