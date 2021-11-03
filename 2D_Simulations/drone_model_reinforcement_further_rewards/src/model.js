@@ -1,3 +1,7 @@
+function sigmoid(z) {
+    return 1 / (1 + Math.exp(-z));
+}
+
 export default class Model {
     /**
      * Define a new model with specified parameters.
@@ -115,14 +119,18 @@ export default class Model {
                 if(rewards[index+5] && index+5 < memory.maxMemory){
                     // Discounted next state difference rewards
                     let oldQA = currentQ[action]
-                    currentQ[action] = this.discountRate * (rewards[index+1] - rewards[index]);
+                    // currentQ[action] = this.discountRate * (rewards[index+1] - rewards[index]);
+                    currentQ[action] = this.discountRate * rewards[index];
 
-                    let n = 2;
+                    let n = 1;
                     while(n+index < this.batchSize && n<50){
                         // console.log(n+index, n+index < this.batchSize, rewards[index+n])
-                        currentQ[action] += this.discountRate**n * (rewards[index+n] - rewards[index+n-1]);
+                        //currentQ[action] += this.discountRate**n * (rewards[index+n] - rewards[index+n-1]);
+                        currentQ[action] += this.discountRate**n * rewards[index+n];
                         n++;
                     }
+
+                    currentQ[action] = sigmoid(currentQ[action]) - 0.5;
                     
                     x.push(state.dataSync());
                     y.push(currentQ);

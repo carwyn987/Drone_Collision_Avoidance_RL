@@ -57,7 +57,7 @@ async function beginExecution(){
     // Define the center of the canvas
     let center = {
         x: canvas.width/2,
-        y: canvas.height/2 - 100
+        y: canvas.height/2
     }
 
     // Allocate droneState variable in memory
@@ -66,12 +66,14 @@ async function beginExecution(){
     let action;
     let reward;
     let numFrames;
+    let sum;
 
     // Run NUM_SIMULATIONS simulations
     for( ;sims<NUM_SIMULATIONS; sims++){
         console.log(sims)
         // Run the current simulation until drone crashes
         numFrames = 0;
+        sum = 0;
         let crashed = false;
         while(!crashed && numFrames < MAX_FRAMES){
             // Saves browser from crashing
@@ -88,15 +90,15 @@ async function beginExecution(){
             // Get the current calculated reward
             reward = calculateReward(drone, ball, center, canvas.height);
 
-            if(numFrames%60 == 0){
-                console.log(reward)
-            }
-
             // Draw on canvas updated parameters
             crashed = draw(canvas, ctx, drone, ball, GRAVITY);
 
             if(crashed)
                 reward = -1;
+
+            console.log(reward)
+            // Add to total sum of rewards
+            sum += reward;
 
             // Push the current drone state, action, and reward to memory
             memory.addSample([totalState, action, reward]);
@@ -115,7 +117,7 @@ async function beginExecution(){
         ball.resetBall(canvas.height);
 
         // Decrement RAND_ACTION_PROB exponentially
-        RAND_ACTION_PROB *= 0.95;
+        RAND_ACTION_PROB *= 0.99;
         // RAND_ACTION_PROB < 0.1 ? RAND_ACTION_PROB = 0.1 :
 
         // Commence model training
