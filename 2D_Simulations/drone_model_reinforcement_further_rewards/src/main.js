@@ -96,7 +96,6 @@ async function beginExecution(){
             if(crashed)
                 reward = -1;
 
-            console.log(reward)
             // Add to total sum of rewards
             sum += reward;
 
@@ -123,7 +122,7 @@ async function beginExecution(){
         // Commence model training
         model.batchSize = numFrames<MAX_FRAMES?numFrames : MAX_FRAMES;
         model.batchSize = numFrames<MEMORY_SIZE?numFrames : MEMORY_SIZE;
-        model.commenceTraining(memory);
+        model.commenceTraining(memory, sum);
 
         // Save the current model to local storage
         if(sims%500 == 0 && sims>0){

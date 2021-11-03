@@ -14,6 +14,8 @@ export default function calculateReward(droneObj, ballObj, center, innerHeight){
     // return -Math.abs(droneObj.y - center.y)/600 + distanceFromEdge/600 + 0.5;
     if(distanceFromCenter < 100){
         return 1;
+    }else if(distanceFromBall < 30 || distanceFromEdge < 30){
+        return -1;
     }else{
         return 0;
     }

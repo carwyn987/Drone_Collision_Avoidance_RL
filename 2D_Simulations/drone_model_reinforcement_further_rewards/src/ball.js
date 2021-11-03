@@ -54,6 +54,11 @@ export default class Ball{
         if(this.y <= 0){
             this.resetBall(canvas.height)
         }
+
+        // Check if ball passed drone
+        if(this.x > canvas.width/2 + 160){
+            this.resetBall(canvas.height)
+        }
     }
 
     /**

@@ -1,5 +1,22 @@
+/**
+ * Sigmoid function
+ * @param {Number} z 
+ */
 function sigmoid(z) {
-    return 1 / (1 + Math.exp(-z));
+    return 1 / (1 + Math.exp(-z/4));
+}
+
+/**
+ * Sums all the values including and after an index in an array
+ * @param {Array} arr An array
+ * @param {Number} index The index
+ */
+function sumRest(arr, index) {
+    let s = 0;
+    for(let i = index; i<arr.length; i++){
+        s+= arr[i];
+    }
+    return s;
 }
 
 export default class Model {
@@ -95,7 +112,7 @@ export default class Model {
      * @param {Object} memory Memory object
      * @param {Number} numFrames Number of frames of last game
      */
-    async commenceTraining(memory){
+    async commenceTraining(memory, sum){
         let batch = memory.sample(this.batchSize);
         // filter out states from batch
         let states = batch.map(([state, , ]) => state);
@@ -117,21 +134,9 @@ export default class Model {
                 currentQ = currentQ.dataSync();
                 
                 if(rewards[index+5] && index+5 < memory.maxMemory){
-                    // Discounted next state difference rewards
-                    let oldQA = currentQ[action]
-                    // currentQ[action] = this.discountRate * (rewards[index+1] - rewards[index]);
-                    currentQ[action] = this.discountRate * rewards[index];
-
-                    let n = 1;
-                    while(n+index < this.batchSize && n<50){
-                        // console.log(n+index, n+index < this.batchSize, rewards[index+n])
-                        //currentQ[action] += this.discountRate**n * (rewards[index+n] - rewards[index+n-1]);
-                        currentQ[action] += this.discountRate**n * rewards[index+n];
-                        n++;
-                    }
-
-                    currentQ[action] = sigmoid(currentQ[action]) - 0.5;
+                    currentQ[action] = sigmoid(sumRest(rewards, index));
                     
+                    console.log(sumRest(rewards, index),currentQ[action])
                     x.push(state.dataSync());
                     y.push(currentQ);
                 }
