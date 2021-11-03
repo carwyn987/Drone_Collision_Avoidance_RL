@@ -68,19 +68,6 @@ export default class Ball{
     }
 
     /**
-     * Gets the current attributes of ball and return as an array
-     * @returns {tensor2d} 2 attribute tensor of ball y and vy
-     */
-    getState() {
-        return {
-            x: this.x,
-            y: this.y,
-            vx: this.vx,
-            vy: this.vy
-        }
-    }
-
-    /**
      * Renders the ball at the current parameters of referenced ball object
      * @param {Object} ctx Context of the canvas. Used to allow ball class to render ball.
      */

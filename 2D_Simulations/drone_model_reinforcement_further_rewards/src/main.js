@@ -11,7 +11,7 @@ import rewardRange from './visual_extras.js';
 let MEMORY_SIZE = 500;
 let GRAVITY = 0.02;
 let NUM_SIMULATIONS = 99999;
-let RAND_ACTION_PROB = 0.9;
+let RAND_ACTION_PROB = 0.99;
 let DISCOUNT_RATE = 0.9;
 let MAX_FRAMES = 1000;
 
@@ -29,7 +29,7 @@ async function beginExecution(){
     let memory = new Memory(MEMORY_SIZE);
 
     // Create a new model object for predicting drone action
-    let model = new Model(50, 2, 2, 100, DISCOUNT_RATE); // Currently set to 10 hidden layer nodes, 2 states (drone y, vy), 2 actions (up, down), 100 batch size
+    let model = new Model(50, 6, 2, 100, DISCOUNT_RATE); // Currently set to 10 hidden layer nodes, 2 states (drone y, vy), 2 actions (up, down), 100 batch size
     
     // Set up variable for number of iterations of training
     let sims = 0;
@@ -62,6 +62,7 @@ async function beginExecution(){
 
     // Allocate droneState variable in memory
     let droneState;
+    let totalState;
     let action;
     let reward;
     let numFrames;
@@ -78,20 +79,27 @@ async function beginExecution(){
 
             // Get current drone state
             droneState = drone.getState(canvas);
+            totalState = tf.concat([droneState, ball.getState(canvas)],1);
 
             // Choose and perform action
-            action = model.chooseAction(droneState, RAND_ACTION_PROB);
+            action = model.chooseAction(totalState, RAND_ACTION_PROB);
             drone.move(action)
 
             // Get the current calculated reward
             reward = calculateReward(drone, ball, center, canvas.height);
-            console.log(reward)
 
-            // Push the current drone state, action, and reward to memory
-            memory.addSample([droneState, action, reward]);
+            if(numFrames%60 == 0){
+                console.log(reward)
+            }
 
             // Draw on canvas updated parameters
             crashed = draw(canvas, ctx, drone, ball, GRAVITY);
+
+            if(crashed)
+                reward = -1;
+
+            // Push the current drone state, action, and reward to memory
+            memory.addSample([totalState, action, reward]);
 
             // Set up green reward range visual
             rewardRange(ctx, center);
@@ -107,14 +115,16 @@ async function beginExecution(){
         ball.resetBall(canvas.height);
 
         // Decrement RAND_ACTION_PROB exponentially
-        RAND_ACTION_PROB *= 0.9;
+        RAND_ACTION_PROB *= 0.95;
         // RAND_ACTION_PROB < 0.1 ? RAND_ACTION_PROB = 0.1 :
 
         // Commence model training
-        model.commenceTraining(memory, numFrames);
+        model.batchSize = numFrames<MAX_FRAMES?numFrames : MAX_FRAMES;
+        model.batchSize = numFrames<MEMORY_SIZE?numFrames : MEMORY_SIZE;
+        model.commenceTraining(memory);
 
         // Save the current model to local storage
-        if(sims%50 == 0 && sims>0){
+        if(sims%500 == 0 && sims>0){
             let saveResult = await model.network.save('localstorage://my-model-2');
             localStorage.setItem('numIterations2', sims);
             console.log("Saved model, iteration: ", sims);

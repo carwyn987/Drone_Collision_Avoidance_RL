@@ -35,7 +35,6 @@ export default class Model {
         this.network.add(tf.layers.dense({
             units: this.hiddenLayers,
             activation: 'relu',
-            inputShape: this.numStateVars
         }))
 
         //Add a densely connected output layer
@@ -92,7 +91,7 @@ export default class Model {
      * @param {Object} memory Memory object
      * @param {Number} numFrames Number of frames of last game
      */
-    async commenceTraining(memory, numFrames){
+    async commenceTraining(memory){
         let batch = memory.sample(this.batchSize);
         // filter out states from batch
         let states = batch.map(([state, , ]) => state);
@@ -113,25 +112,18 @@ export default class Model {
                 let currentQ = qsa[index];
                 currentQ = currentQ.dataSync();
                 
-                if(qsa[index+5]){
-
-                    console.log("before: ", currentQ[action])
-
+                if(rewards[index+5] && index+5 < memory.maxMemory){
                     // Discounted next state difference rewards
-                    // currentQ[action] = this.discountRate * (qsa[index+1].max().dataSync() - currentQ[action]);
-                    // currentQ[action] += this.discountRate**2 * (qsa[index+2].max().dataSync() - qsa[index+1].max().dataSync());
-                    // currentQ[action] += this.discountRate**3 * (qsa[index+3].max().dataSync() - qsa[index+2].max().dataSync());
-                    // currentQ[action] += this.discountRate**4 * (qsa[index+4].max().dataSync() - qsa[index+3].max().dataSync());
-                    // currentQ[action] += this.discountRate**5 * (qsa[index+5].max().dataSync() - qsa[index+4].max().dataSync());
-
+                    let oldQA = currentQ[action]
                     currentQ[action] = this.discountRate * (rewards[index+1] - rewards[index]);
-                    currentQ[action] += this.discountRate**2 * (rewards[index+2] - rewards[index+1]);
-                    currentQ[action] += this.discountRate**3 * (rewards[index+3] - rewards[index+2]);
-                    currentQ[action] += this.discountRate**4 * (rewards[index+4] - rewards[index+3]);
-                    currentQ[action] += this.discountRate**5 * (rewards[index+5] - rewards[index+4]);
 
-                    console.log("after: ", currentQ[action])
-
+                    let n = 2;
+                    while(n+index < this.batchSize && n<50){
+                        // console.log(n+index, n+index < this.batchSize, rewards[index+n])
+                        currentQ[action] += this.discountRate**n * (rewards[index+n] - rewards[index+n-1]);
+                        n++;
+                    }
+                    
                     x.push(state.dataSync());
                     y.push(currentQ);
                 }
