@@ -66,13 +66,22 @@ export default class Ball{
      * @param {Integer} innerHeight 
      */
     resetBall(innerHeight) {
-        this.x = 0;
+        
         // this.y = innerHeight/2 - Math.random()*innerHeight/4;
         // this.vx = Math.random()*2 + 4;
         // this.vy = Math.random()*2 - 2;
-        this.y = innerHeight/2;
-        this.vx = 5;
-        this.vy = -1.8;
+        if(Math.random() < 0.5){
+            this.x = 0;
+            this.y = innerHeight/2 + 200;
+            this.vx = 5;
+            this.vy = -3.3;
+        }else{
+            this.x = 0;
+            this.y = innerHeight/2 - 200;
+            this.vx = 6;
+            this.vy = .2;
+        }
+        
     }
 
     /**
