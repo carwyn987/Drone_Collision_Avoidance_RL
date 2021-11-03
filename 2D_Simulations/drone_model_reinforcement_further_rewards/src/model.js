@@ -58,6 +58,11 @@ export default class Model {
             activation: 'relu',
         }))
 
+        this.network.add(tf.layers.dense({
+            units: this.hiddenLayers,
+            activation: 'relu',
+        }))
+
         //Add a densely connected output layer
         this.network.add(tf.layers.dense({
             units: this.numActions

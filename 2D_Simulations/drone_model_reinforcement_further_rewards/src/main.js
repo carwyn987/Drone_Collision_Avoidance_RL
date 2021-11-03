@@ -29,7 +29,7 @@ async function beginExecution(){
     let memory = new Memory(MEMORY_SIZE);
 
     // Create a new model object for predicting drone action
-    let model = new Model(50, 6, 2, 100, DISCOUNT_RATE); // Currently set to 10 hidden layer nodes, 2 states (drone y, vy), 2 actions (up, down), 100 batch size
+    let model = new Model(50, 7, 2, 100, DISCOUNT_RATE); // Currently set to 10 hidden layer nodes, 2 states (drone y, vy), 2 actions (up, down), 100 batch size
     
     // Set up variable for number of iterations of training
     let sims = 0;
@@ -52,6 +52,7 @@ async function beginExecution(){
 
     // Create a ball and render it
     let ball = new Ball(20,300,2.5,-1.9,30);
+    ball.resetBall(canvas.height);
     ball.renderBall(ctx);
 
     // Define the center of the canvas
@@ -81,7 +82,7 @@ async function beginExecution(){
 
             // Get current drone state
             droneState = drone.getState(canvas);
-            totalState = tf.concat([droneState, ball.getState(canvas)],1);
+            totalState = tf.concat([droneState, ball.getState(canvas), tf.tensor2d([[(drone.y - ball.y)/500]])],1);
 
             // Choose and perform action
             action = model.chooseAction(totalState, RAND_ACTION_PROB);
@@ -125,7 +126,7 @@ async function beginExecution(){
         model.commenceTraining(memory, sum);
 
         // Save the current model to local storage
-        if(sims%500 == 0 && sims>0){
+        if(sims%30 == 0 && sims>0){
             let saveResult = await model.network.save('localstorage://my-model-2');
             localStorage.setItem('numIterations2', sims);
             console.log("Saved model, iteration: ", sims);

@@ -31,7 +31,7 @@ export default class Ball{
         let vyScaled = (this.vy/20);
         // Now scale vx value
         // Let the max range be [-5, 5]. Therefore to transform, divide by 10 to reduce to [-0.5, 0.5]
-        let vxScaled = (this.vx/10);
+        let vxScaled = (this.vx/20);
         
         return tf.tensor2d([[xScaled, yScaled, vxScaled, vyScaled]]);
     }
@@ -67,9 +67,12 @@ export default class Ball{
      */
     resetBall(innerHeight) {
         this.x = 0;
-        this.y = innerHeight/2 - Math.random()*innerHeight/4;
-        this.vx = Math.random()*2 + 4;
-        this.vy = Math.random()*2 - 2;
+        // this.y = innerHeight/2 - Math.random()*innerHeight/4;
+        // this.vx = Math.random()*2 + 4;
+        // this.vy = Math.random()*2 - 2;
+        this.y = innerHeight/2;
+        this.vx = 5;
+        this.vy = -1.8;
     }
 
     /**
